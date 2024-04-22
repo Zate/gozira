@@ -209,3 +209,43 @@ func (s *ServiceDeskService) ListCustomers(ctx context.Context, serviceDeskID in
 
 	return customerList, resp, nil
 }
+
+// ServiceDeskInfo is a DTO for ServiceDesk information
+type ServiceDeskInfo struct {
+	Links struct {
+		Self string `json:"self,omitempty"`
+	} `json:"_links,omitempty"`
+	BuildChangeSet string `json:"buildChangeSet,omitempty"`
+	BuildDate      struct {
+		EpochMillis int64  `json:"epochMillis,omitempty"`
+		Friendly    string `json:"friendly,omitempty"`
+		Iso8601     string `json:"iso8601,omitempty"`
+		Jira        string `json:"jira,omitempty"`
+	} `json:"buildDate,omitempty"`
+	IsLicensedForUse bool   `json:"isLicensedForUse,omitempty"`
+	PlatformVersion  string `json:"platformVersion,omitempty"`
+	Version          string `json:"version,omitempty"`
+}
+
+// ServiceDeskinfo retrieves information about the Jira Service Management instance such as software version, builds, and related links.
+//
+// https://developer.atlassian.com/cloud/jira/service-desk/rest/api-group-servicedesk/#api-rest-servicedeskapi-info-get
+func (s *ServiceDeskService) ServiceDeskinfo(ctx context.Context) (*ServiceDeskInfo, *Response, error) {
+	req, err := s.client.NewRequest(ctx, http.MethodGet, "rest/servicedeskapi/info", nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	resp, err := s.client.Do(req, nil)
+	if err != nil {
+		return nil, resp, NewJiraError(resp, err)
+	}
+	defer resp.Body.Close()
+
+	serviceDeskInfo := new(ServiceDeskInfo)
+	if err := json.NewDecoder(resp.Body).Decode(serviceDeskInfo); err != nil {
+		return nil, resp, fmt.Errorf("could not unmarshall the data into struct")
+	}
+
+	return serviceDeskInfo, resp, nil
+}
